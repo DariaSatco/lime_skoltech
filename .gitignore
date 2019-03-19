@@ -1,5 +1,5 @@
-
 .ipynb_checkpoints/
-.vscode\
+.vscode/
 images_keras_test.ipynb
 __pycache__
+venv/
