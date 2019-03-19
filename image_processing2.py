@@ -1,17 +1,16 @@
-import copy
-from functools import partial
-
 import numpy as np
 import sklearn
 import sklearn.preprocessing
 from sklearn.utils import check_random_state
 from skimage.color import gray2rgb
 from skimage.segmentation import quickshift, slic
+import copy
 
 from lime_sk import Lime
 
 
 class ImageExplanation(object):
+    """ Returns image and mask for visualization """
     def __init__(self, image, segments):
         """
         Args:
@@ -169,8 +168,12 @@ class ImageExplainer(object):
 
         model = lambda x: self.sampling_pred(x, self.label, image, bg_image, segments, clf_model)
 
-        result.local_explanation = self.base.explain(features=features, model=model, n=num_samples,
-                                                     n_features=num_features)
+        result.local_explanation, result.score = self.base.explain(
+                                                    features=features,
+                                                    model=model,
+                                                    n=num_samples,
+                                                    n_features=num_features
+                                                    )
 
         return result
 
