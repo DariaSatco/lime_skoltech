@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.linear_model import lars_path, Ridge
 from sklearn.metrics import pairwise_distances
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from numpy import random
 import copy
@@ -102,7 +103,7 @@ class Lime():
         return result_data, labels
 
     def explain(self, features, model, n, n_features, reg_method='lasso',
-                rf_n=200, rf_max_depth=5):
+                rf_n=200, rf_max_depth=5, regressor='ridge', dt_max_depth=10):
         """explain instance
         
         Arguments:
@@ -114,7 +115,9 @@ class Lime():
             n_features {int} -- number of features to preserve
             reg_method {str} -- regularization method 'lasso' or 'random_forest'
             rf_n {int} -- number of estimators in random forest
-            rf_max_depth -- max depth of estimators in random forest
+            rf_max_depth {int} -- max depth of estimators in random forest
+            regressor {str} -- local estimator 'decision_tree' or 'ridge'
+            dt_max_depth {int} -- decision tree max depth
         Returns:
             tuple -- most important features and coefficients, score of regressor model
         """
@@ -131,16 +134,26 @@ class Lime():
 
         used_features = self._feature_selection(perturbed_data,
         preturbed_labels, weights, n_features, reg_method, rf_n, rf_max_depth, )
-        
-        explainer_model = Ridge()
 
-        explainer_model.fit(perturbed_data[:, used_features], preturbed_labels,
-                            sample_weight=weights)
+        if regressor == 'ridge':        
+            explainer_model = Ridge()
 
-        return (sorted(zip(used_features, explainer_model.coef_),
-                      key=lambda a: np.abs(a[1]), reverse=True), 
-                explainer_model.score(perturbed_data[:, used_features], preturbed_labels,
-                                      sample_weight=weights))
+            explainer_model.fit(perturbed_data[:, used_features], preturbed_labels,
+                                sample_weight=weights)
+
+            return (sorted(zip(used_features, explainer_model.coef_),
+                            key=lambda a: np.abs(a[1]), reverse=True), 
+                    explainer_model.score(perturbed_data[:, used_features], preturbed_labels,
+                                            sample_weight=weights))
+
+        elif regressor =='decision_tree':
+            explainer_model = DecisionTreeRegressor(max_depth=dt_max_depth)
+            explainer_model.fit(perturbed_data[:, used_features], preturbed_labels,
+                                sample_weight=weights)
+            return (sorted(zip(used_features, explainer_model.feature_importances_),
+                           key=lambda a: np.abs(a[1]), reverse=True), 
+                    explainer_model.score(perturbed_data[:, used_features], preturbed_labels,
+                                          sample_weight=weights))
 
 def gaussian_kernel(x, sigma):
     return np.exp(-x ** 2 / sigma ** 2)
