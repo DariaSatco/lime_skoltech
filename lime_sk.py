@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.linear_model import lars_path, Ridge
 from sklearn.metrics import pairwise_distances
+from sklearn.ensemble import RandomForestRegressor
 from numpy import random
 import copy
 
@@ -35,25 +36,36 @@ class Lime():
             * np.sqrt(weights))
         return weighted_data, weighted_labels
 
-    def _feature_selection(self, weighted_data, weighted_labels, n_features):
+    def _feature_selection(self, data, labels, weights, n_features, method='lasso',
+                           rf_n=200, rf_max_depth=5):
         """select most important features with lasso
         
         Arguments:
             weighted_data {np.array} -- weighted data
             weighted_labels {np.array} -- weighted labels
             n_features {[type]} -- number of features to preserve
+            method {str} -- regularization method 'lasso' or 'random_forest'
+            rf_n {int} -- number of estimators in random forest
+            rf_max_depth -- max depth of estimators in random forest
         
         Returns:
             np.array -- indexes of the most important features
         """
 
-
-        __, _, coeff = lars_path(weighted_data, weighted_labels, method='lasso')
-        for i in range(len(coeff.T) - 1, 0, -1):
-            cur_coeffs = coeff.T[i].nonzero()[0]
-            if len(cur_coeffs) <= n_features:
-                break
-        return cur_coeffs
+        if method == 'lasso':
+            weighted_data, weighted_labels = self._weight_data(data, labels, weights)
+            __, _, coeff = lars_path(weighted_data, weighted_labels, method='lasso')
+            for i in range(len(coeff.T) - 1, 0, -1):
+                cur_coeffs = coeff.T[i].nonzero()[0]
+                if len(cur_coeffs) <= n_features:
+                    break
+            return cur_coeffs
+        elif method == 'random_forest':
+            rf = RandomForestRegressor(n_estimators=rf_n, max_depth=rf_max_depth)
+            rf.fit(data, labels, sample_weight=weights)
+            feature_importances = rf.feature_importances_
+        return [i for i, _ in sorted(enumerate(feature_importances), key=lambda x: x[1],
+                                     reverse=True)[0:n_features]]
 
     def _perturb_data(self, features, n_samples,  model, placeholder=None ):
         """create smaples in the neighborhood of the explained instance
@@ -89,8 +101,8 @@ class Lime():
 
         return result_data, labels
 
-
-    def explain(self, features, model, n, n_features):
+    def explain(self, features, model, n, n_features, reg_method='lasso',
+                rf_n=200, rf_max_depth=5):
         """explain instance
         
         Arguments:
@@ -100,7 +112,9 @@ class Lime():
                                 probability of explained class
             n {int} -- number of samples to create
             n_features {int} -- number of features to preserve
-        
+            reg_method {str} -- regularization method 'lasso' or 'random_forest'
+            rf_n {int} -- number of estimators in random forest
+            rf_max_depth -- max depth of estimators in random forest
         Returns:
             tuple -- most important features and coefficients, score of regressor model
         """
@@ -115,11 +129,8 @@ class Lime():
         ).ravel()
         weights = self._kernel(distances)
 
-        weighted_data, weighted_labels = self._weight_data(
-            perturbed_data, preturbed_labels, weights
-        )
-        used_features = self._feature_selection(weighted_data,
-        weighted_labels, n_features)
+        used_features = self._feature_selection(perturbed_data,
+        preturbed_labels, weights, n_features, reg_method, rf_n, rf_max_depth, )
         
         explainer_model = Ridge()
 
