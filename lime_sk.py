@@ -73,8 +73,10 @@ class Lime():
         explainer_model.fit(preturbed_data[:, used_features], preturbed_labels,
                             sample_weight=weights)
 
-        return sorted(zip(used_features, explainer_model.coef_),
-                      key=lambda a: np.abs(a[1]), reverse=True),
+        return (sorted(zip(used_features, explainer_model.coef_),
+                      key=lambda a: np.abs(a[1]), reverse=True), 
+                explainer_model.score(preturbed_data[:, used_features], preturbed_labels,
+                                      sample_weight=weights))
 
 def gaussian_kernel(x, sigma):
     return np.exp(-x ** 2 / sigma ** 2)
