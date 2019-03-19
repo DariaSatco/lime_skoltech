@@ -20,7 +20,7 @@ class ImageExplanation(object):
         """
         self.image = image            # image to be processed
         self.segments = segments      # superpixels
-        self.local_explanation = None # weights for each superpixel per each class label
+        self.local_explanation = None # weights for each superpixel within certain class
         self.score = None             # scoring of goodness of g(x)
 
 
@@ -132,16 +132,16 @@ class ImageExplainer(object):
 
         # Segmentation of the image -------------------------------
         # we use Quick Shift algorithm for segmentation
-        segments = quickshift(image, kernel_size=4, max_dist=200, ratio=0.2, random_seed=random_seed)
+        # segments = quickshift(image, kernel_size=4, max_dist=200, ratio=0.2, random_seed=random_seed)
         # we can also try SLIC
-        # segments = slic(test_image, n_segments=100, compactness=20, sigma=1)
+        segments = slic(image, n_segments=100, compactness=20, sigma=1)
 
         # Create basement for further sampling ---------------------
         bg_image = image.copy()  # basement for further sampling
         if hide_color is None:
             # average over pixels within a superpixel separately over each channel
             for x in np.unique(segments):
-                fudged_image[segments == x] = (
+                bg_image[segments == x] = (
                     np.mean(image[segments == x][:, 0]),
                     np.mean(image[segments == x][:, 1]),
                     np.mean(image[segments == x][:, 2]))
