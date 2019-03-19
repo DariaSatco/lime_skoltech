@@ -54,6 +54,13 @@ class ImageExplanation(object):
         else:
             bg = self.image.copy()
 
+        # look for maximum positive and minimum negative weigth
+        weights = [x[1] for x in explanation]
+        weights = np.array(weights)
+
+        max_pos_w = np.max(weights)
+        min_neg_w = np.max(-weights)
+
         # show or hide negative contributions
         if positive_only:
             # list of superpixel indices
@@ -73,13 +80,16 @@ class ImageExplanation(object):
                 # red = img[:, :, 0]
                 # green = img[:, :, 1]
                 # blue = img[:, :, 2]
-                c = 0 if w < 0 else 1
+                if w < 0:
+                    c = 0
+#                 norm = min_neg_w
+                else:
+                    c = 1
+#                 norm = max_pos_w
+                norm = max_pos_w
                 mask[segments == ind] = 1 if w < 0 else 2
-                bg[segments == ind] = image[segments == ind].copy()
-                bg[segments == ind, c] = np.max(image)
-                for cp in [0, 1, 2]:
-                    if c == cp:
-                        continue
+                bg[segments == ind] = 0.
+                bg[segments == ind, c] = np.max(image)*abs(w)/norm
             return bg, mask
 
 class ImageExplainer(object):
