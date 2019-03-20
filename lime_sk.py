@@ -10,7 +10,7 @@ class Lime():
     """
     implementation of basic LIME funtionality
     """
-    def __init__(self, distance=None, kernel=None, kernel_width=3):
+    def __init__(self, distance=None, kernel=None, kernel_width=3, random_state=None):
         if kernel is not None:
             self._kernel = kernel
         else:
@@ -18,6 +18,7 @@ class Lime():
         if distance is None:
             distance = 'euclidean' 
         self._distance = distance
+        self._random_state = random_state
        
     def _weight_data(self, data, labels, weights):
         """weight data for futher lasso regularization
@@ -62,7 +63,8 @@ class Lime():
                     break
             return cur_coeffs
         elif method == 'random_forest':
-            rf = RandomForestRegressor(n_estimators=rf_n, max_depth=rf_max_depth)
+            rf = RandomForestRegressor(n_estimators=rf_n, max_depth=rf_max_depth,
+                                       random_state=self._random_state)
             rf.fit(data, labels, sample_weight=weights)
             feature_importances = rf.feature_importances_
         return [i for i, _ in sorted(enumerate(feature_importances), key=lambda x: x[1],
@@ -79,15 +81,16 @@ class Lime():
                                 probability of explained class
         
         Keyword Arguments:
-            placeholder {object} -- value ti replace features
+            placeholder {object} -- value to replace features
         
         Returns:
             Tuple(np.array, np.array) -- perturbed data and labels in the neighborhood
                                          of the original data
         """
 
-        data = (np.random.randint(0, 2,
-                                  n_samples * features.size).reshape(n_samples, -1))
+        data = (np.random.RandomState(self._random_state).randint(0, 2,
+                                                                  n_samples * features.size,
+                                                                 ).reshape(n_samples, -1))
         data[0, :] = 1
         result_data = np.zeros((n_samples, features.size))
         labels = np.zeros(n_samples)
@@ -136,7 +139,7 @@ class Lime():
         preturbed_labels, weights, n_features, reg_method, rf_n, rf_max_depth, )
 
         if regressor == 'ridge':        
-            explainer_model = Ridge()
+            explainer_model = Ridge(alpha=0.1, random_state=self._random_state)
 
             explainer_model.fit(perturbed_data[:, used_features], preturbed_labels,
                                 sample_weight=weights)
@@ -156,7 +159,7 @@ class Lime():
                                           sample_weight=weights))
 
 def gaussian_kernel(x, sigma):
-    return np.exp(-x ** 2 / sigma ** 2)
+    return np.exp(-(x ** 2) / (sigma ** 2))
 
 
 
