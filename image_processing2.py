@@ -114,7 +114,9 @@ class ImageExplainer(object):
                            num_features=None,
                            num_samples=1000,
                            random_seed=None,
-                           segmentation='slic'):
+                           segmentation='slic',
+                           reg_method = 'lasso',
+                           regressor = 'ridge'):
 
         """
         Generates explanations for a prediction.
@@ -178,7 +180,9 @@ class ImageExplainer(object):
                                                     features=features,
                                                     model=model,
                                                     n=num_samples,
-                                                    n_features=num_features
+                                                    n_features=num_features,
+                                                    reg_method=reg_method,
+                                                    regressor=regressor
                                                     )
 
         return result
