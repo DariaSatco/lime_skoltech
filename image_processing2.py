@@ -44,7 +44,7 @@ class ImageExplanation(object):
 
         segments = self.segments
         image = self.image
-        explanation = self.local_explanation[0]  # explanation of the particular label
+        explanation = self.local_explanation  # explanation of the particular label
         mask = np.zeros(segments.shape, segments.dtype)
 
         # show or hide original image
