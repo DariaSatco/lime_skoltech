@@ -167,8 +167,8 @@ class ImageExplainer(object):
         # Turn on all superpixels for original sample
         features = np.ones(np.unique(segments).size)
 
-        if num_features is None:
-            num_features = np.unique(segments).size
+        # if num_features is None:
+            # num_features = np.unique(segments).size
 
         result = ImageExplanation(image, segments)
 
