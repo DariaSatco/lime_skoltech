@@ -106,14 +106,15 @@ class ImageExplainer(object):
         # Turn seed into a np.random.RandomState instance
         self.random_state = check_random_state(random_state)
         self.label = label
-        self.base = Lime(distance=distance, kernel_width=kernel_width) #, random_state=self.random_state)
+        self.base = Lime(distance=distance, kernel_width=kernel_width, random_state=random_state)
 
     def explain_prediction(self, image,
                            clf_model,
                            hide_color=None,
                            num_features=None,
                            num_samples=1000,
-                           random_seed=None):
+                           random_seed=None,
+                           segmentation='slic'):
 
         """
         Generates explanations for a prediction.
@@ -140,10 +141,15 @@ class ImageExplainer(object):
             random_seed = self.random_state.randint(0, high=1000)
 
         # Segmentation of the image -------------------------------
-        # we use Quick Shift algorithm for segmentation
-        # segments = quickshift(image, kernel_size=4, max_dist=200, ratio=0.2, random_seed=random_seed)
-        # we can also try SLIC
-        segments = slic(image, n_segments=100, compactness=20, sigma=1)
+        if segmentation == 'quickshift':
+            # Quick Shift algorithm for segmentation
+            segments = quickshift(image, kernel_size=4, max_dist=200, ratio=0.2, random_seed=random_seed)
+        elif segmentation == 'slic':
+            # we can also try SLIC
+            segments = slic(image, n_segments=100, compactness=20, sigma=1)
+        else:
+            print('Segmentation algorithm not known. Try \'slic\' or \'quickshift\' ')
+            raise
 
         # Create basement for further sampling ---------------------
         bg_image = image.copy()  # basement for further sampling

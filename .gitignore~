@@ -1,0 +1,9 @@
+.ipynb_checkpoints/
+<<<<<<< HEAD
+.vscode\
+images_keras_test.ipynb
+=======
+.vscode/
+>>>>>>> a6617d3e6cc5775ae2d7cd58aa6129c25ab4180b
+__pycache__
+venv/
