@@ -57,7 +57,7 @@ class TextExplainer(object):
         """
         
         self.random_state = check_random_state(random_state)
-        self.base = lime_sk.Lime(kernel_width=kernel_width, distance=distance)
+        self.base = lime_sk.Lime(kernel_width=kernel_width, distance=distance, random_state=random_state)
 
     def explain_prediction(self, instance, label, feature_names,
                            clf_model, reg_method='lasso', 
