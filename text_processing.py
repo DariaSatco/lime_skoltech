@@ -60,7 +60,7 @@ class TextExplainer(object):
         self.base = lime_sk.Lime(kernel_width=kernel_width, distance=distance, random_state=random_state)
 
     def explain_prediction(self, instance, label, feature_names,
-                           clf_model, reg_method='lasso', 
+                           clf_model, reg_method='lasso', regressor='ridge',
                            num_features=None,
                            num_samples=1000):
         """
@@ -91,7 +91,7 @@ class TextExplainer(object):
         model = lambda x: self.sampling_pred(x, label, instance, clf_model)
 
         interim_result, result.score = self.base.explain(features=features, model=model, n=num_samples,
-                                                         n_features=num_features, reg_method = reg_method)
+                                                         n_features=num_features, reg_method = reg_method, regressor = regressor)
         interim_result = np.array(interim_result)
         #print(interim_result)
         idx_mass = np.array([elem[0] for elem in interim_result]).astype(int)
